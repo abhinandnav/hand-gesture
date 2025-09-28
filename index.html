@@ -66,7 +66,7 @@
             window.requestAnimationFrame(loop);
         }
 
-        async function predict() {
+               async function predict() {
             const prediction = await model.predict(webcam.canvas);
             let detected = false;
 
@@ -83,6 +83,14 @@
                     }
                 }
             }
+
+            if (!detected) {
+                // Do not reset container, just update first line
+                labelContainer.childNodes[0].innerHTML = "No hand detected";
+                lastGesture = "";
+            }
+        }
+
 
             if (!detected) {
                 labelContainer.innerHTML = "<div style='font-size:17px;'>No hand detected</div>";
