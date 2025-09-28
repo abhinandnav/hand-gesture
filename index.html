@@ -1,113 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Gesture Recognition</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f9f9f9;
-        }
-        #webcam-container {
-            margin-top: 20px;
-        }
-        #label-container div {
-            font-size: 17px;
-            margin: 5px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Soft Toy Detector</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 20px;
+    }
+    #webcam-container {
+      margin-top: 20px;
+    }
+    #label-container div {
+      font-family: Arial, sans-serif;
+      font-size: 17px;
+      margin-top: 5px;
+    }
+  </style>
 </head>
 <body>
-    <h3>Teachable Machine Image Model</h3>
-    <button onclick="init()">Start</button>
-    <div id="webcam-container"></div>
-    <div id="label-container"></div>
+  <h2>Soft Toy Detector</h2>
+  <button type="button" onclick="init()">Start</button>
+  <div id="webcam-container"></div>
+  <div id="label-container"></div>
 
-    <!-- Sound effects -->
-    <audio id="shield-sound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_1e6f7c6d2b.mp3?filename=shield-112508.mp3"></audio>
-    <audio id="fireball-sound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_6f6c3e6b2e.mp3?filename=fireball-112509.mp3"></audio>
-    <audio id="lightning-sound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_3f3e3e3e3e.mp3?filename=lightning-112510.mp3"></audio>
-    <audio id="peace-sound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_7e7e7e7e7e.mp3?filename=peace-112511.mp3"></audio>
+  <!-- TensorFlow + Teachable Machine libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-    <script>
-        const URL = "https://teachablemachine.withgoogle.com/models/3xfX_L6ah/";
-        let model, webcam, labelContainer, maxPredictions;
-        let lastGesture = "";
+  <script type="text/javascript">
+    // Model URL
+    const URL = "https://teachablemachine.withgoogle.com/models/VcUFpNpSP/";
 
-        async function init() {
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
+    let model, webcam, labelContainer, maxPredictions;
 
-            model = await tmImage.load(modelURL, metadataURL);
-            maxPredictions = model.getTotalClasses();
+    // Load model + setup webcam
+    async function init() {
+      const modelURL = URL + "model.json";
+      const metadataURL = URL + "metadata.json";
 
-            const flip = true;
-            webcam = new tmImage.Webcam(300, 300, flip);
-            await webcam.setup();
-            await webcam.play();
-            window.requestAnimationFrame(loop);
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
 
-            document.getElementById("webcam-container").appendChild(webcam.canvas);
-            labelContainer = document.getElementById("label-container");
-            for (let i = 0; i < maxPredictions; i++) {
-                const label = document.createElement("div");
-                label.style.fontFamily = "Arial";
-                label.style.fontSize = "17px";
-                labelContainer.appendChild(label);
-            }
-        }
+      const flip = true; 
+      webcam = new tmImage.Webcam(300, 300, flip); 
+      await webcam.setup(); 
+      await webcam.play();
+      window.requestAnimationFrame(loop);
 
-        async function loop() {
-            webcam.update();
-            await predict();
-            window.requestAnimationFrame(loop);
-        }
-        
-           async function predict() {
-            const prediction = await model.predict(webcam.canvas);
-            let detected = false;
+      document.getElementById("webcam-container").appendChild(webcam.canvas);
+      labelContainer = document.getElementById("label-container");
+      for (let i = 0; i < maxPredictions; i++) {
+        let labelDiv = document.createElement("div");
+        labelContainer.appendChild(labelDiv);
+      }
+    }
 
-            for (let i = 0; i < maxPredictions; i++) {
-                const className = prediction[i].className.trim();
-                const probability = prediction[i].probability.toFixed(2);
-                labelContainer.childNodes[i].innerHTML = `${className}: ${probability}`;
+    async function loop() {
+      webcam.update();
+      await predict();
+      window.requestAnimationFrame(loop);
+    }
 
-                if (probability > 0.85) {
-                    detected = true;
-                    if (className !== lastGesture) {
-                        playSound(className);
-                        lastGesture = className;
-                    }
-                }
-            }
-               
-            if (!detected) {
-                // Do not reset container, just update first line
-                labelContainer.childNodes[0].innerHTML = "No hand detected";
-                lastGesture = "";
-            }
-        }
+    // Run predictions
+    async function predict() {
+      const prediction = await model.predict(webcam.canvas);
+      for (let i = 0; i < maxPredictions; i++) {
+        // Convert decimal (0.85) into percentage (85.0%)
+        const classPrediction =
+          prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(1) + "%";
+        labelContainer.childNodes[i].innerHTML = classPrediction;
+      }
+    }
+  </script>
+</body>
+</html>
 
-
-            if (!detected) {
-                labelContainer.innerHTML = "<div style='font-size:17px;'>No hand detected</div>";
-                lastGesture = "";
-            }
-        }
-
-        function playSound(gesture) {
-            const sounds = {
-                "shield": document.getElementById("shield-sound"),
-                "fireball": document.getElementById("fireball-sound"),
-                "lightning": document.getElementById("lightning-sound"),
-                "peace": document.getElementById("peace-sound")
-            };
-            if (sounds[gesture]) {
-                sounds[gesture].play();
-            }
         }
     </script>
 </body>
