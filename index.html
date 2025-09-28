@@ -65,7 +65,7 @@
             await predict();
             window.requestAnimationFrame(loop);
         }
-
+        
            async function predict() {
             const prediction = await model.predict(webcam.canvas);
             let detected = false;
