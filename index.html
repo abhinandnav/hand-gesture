@@ -67,22 +67,31 @@
         }
 
         async function predict() {
-            const prediction = await model.predict(webcam.canvas);
-            let detected = false;
+    const prediction = await model.predict(webcam.canvas);
+    let detected = false;
 
-            for (let i = 0; i < maxPredictions; i++) {
-                const className = prediction[i].className.trim();
-                const probability = prediction[i].probability.toFixed(2);
-                labelContainer.childNodes[i].innerHTML = `${className}: ${probability}`;
+    for (let i = 0; i < maxPredictions; i++) {
+        const className = prediction[i].className.trim();
+        const probability = prediction[i].probability.toFixed(2);
+        labelContainer.childNodes[i].innerHTML = `${className}: ${probability}`;
 
-                if (probability > 0.85) {
-                    detected = true;
-                    if (className !== lastGesture) {
-                        playSound(className);
-                        lastGesture = className;
-                    }
-                }
+        if (probability > 0.85) {
+            detected = true;
+            if (className !== lastGesture) {
+                playSound(className);
+                lastGesture = className;
             }
+        }
+    }
+
+    if (!detected) {
+        for (let i = 0; i < maxPredictions; i++) {
+            labelContainer.childNodes[i].innerHTML = `${prediction[i].className.trim()}: ${prediction[i].probability.toFixed(2)}`;
+        }
+        lastGesture = "";
+    }
+}
+
 
             if (!detected) {
                 labelContainer.innerHTML = "<div style='font-size:17px;'>No hand detected</div>";
